@@ -1,0 +1,71 @@
+name: Release
+
+on:
+  push:
+    tags:
+      - 'v*'
+
+permissions:
+  contents: write
+
+jobs:
+  build:
+    strategy:
+      matrix:
+        include:
+          - os: macos-14
+            target: aarch64-apple-darwin
+            arch: arm64
+          - os: macos-13
+            target: x86_64-apple-darwin
+            arch: x86_64
+
+    runs-on: ${{ matrix.os }}
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Extract version from tag
+        id: version
+        run: echo "version=${GITHUB_REF_NAME#v}" >> "$GITHUB_OUTPUT"
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'npm'
+          cache-dependency-path: dashboard/package-lock.json
+
+      - name: Build dashboard
+        run: cd dashboard && npm ci && npm run build
+
+      - name: Setup Rust
+        uses: dtolnay/rust-toolchain@stable
+        with:
+          targets: ${{ matrix.target }}
+
+      - name: Build release binary
+        run: cargo build --release --target ${{ matrix.target }}
+
+      - name: Create app bundle
+        run: |
+          ./packaging/macos/bundle.sh \
+            target/${{ matrix.target }}/release/timely \
+            ${{ steps.version.outputs.version }} \
+            dist
+
+      - name: Verify code signature
+        run: codesign --verify --verbose dist/Timely.app
+
+      - name: Package app bundle
+        run: |
+          TAR_NAME=timely-${{ github.ref_name }}-${{ matrix.arch }}-apple-darwin.tar.gz
+          tar -czf "$TAR_NAME" -C dist Timely.app
+          shasum -a 256 "$TAR_NAME" > "$TAR_NAME.sha256"
+
+      - name: Upload release assets
+        uses: softprops/action-gh-release@v2
+        with:
+          files: |
+            timely-*.tar.gz
+            timely-*.tar.gz.sha256
