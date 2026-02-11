@@ -11,6 +11,7 @@ A lightweight, agent-friendly activity tracker for macOS. Timely runs as a backg
 - **JSON output** — every CLI command supports `--json` for agent/script consumption
 - **AFK detection** — uses macOS idle time (via `ioreg`) to track away-from-keyboard periods
 - **Browser tracking** — captures active URL and domain from Chrome, Safari, Arc, Firefox via AppleScript
+- **TUI app detection** — detects Claude Code, Codex, Vim, Neovim, and 20+ other tools running inside terminals
 
 ## Installation
 
@@ -212,6 +213,7 @@ Timely ships with categories and productivity scores out of the box:
 | Category | Score | Examples |
 |----------|-------|---------|
 | work/coding | +2.0 | VS Code, Cursor, Xcode, IntelliJ, Vim, Zed |
+| work/ai-tools | +2.0 | Claude Code, Codex CLI, Aider, Cursor CLI |
 | work/terminal | +1.5 | Terminal, iTerm2, Warp, Ghostty, kitty |
 | work/writing | +1.5 | Notion, Obsidian, Pages, Word |
 | work/design | +1.0 | Figma, Sketch, Photoshop |

@@ -7,18 +7,19 @@ pub struct WindowInfo {
 }
 
 pub fn get_active_window() -> Result<WindowInfo> {
+    // Use System Events for both app name AND window title.
+    // This only requires Accessibility permission — avoids per-app
+    // Automation permission popups that `tell application X` triggers.
     let script = r#"
 tell application "System Events"
-    set frontApp to name of first application process whose frontmost is true
+    set frontProc to first application process whose frontmost is true
+    set frontApp to name of frontProc
+    try
+        set windowTitle to name of front window of frontProc
+    on error
+        set windowTitle to ""
+    end try
 end tell
-
-try
-    tell application frontApp
-        set windowTitle to name of front window
-    end tell
-on error
-    set windowTitle to ""
-end try
 
 return frontApp & "|" & windowTitle
 "#;

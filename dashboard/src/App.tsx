@@ -250,7 +250,7 @@ export default function App() {
         <div className="max-w-screen-2xl mx-auto px-4 py-6">
           {/* Header */}
           <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 mb-6">
-            <h1 className="text-2xl font-bold tracking-tight">Timetrack Dashboard</h1>
+            <h1 className="text-2xl font-bold tracking-tight">Timely</h1>
             <div className="flex items-center gap-2">
               <DateRangePicker />
               <RulesPanel

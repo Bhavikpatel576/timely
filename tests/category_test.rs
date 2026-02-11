@@ -133,6 +133,69 @@ fn test_user_rule_overrides_builtin() {
 }
 
 #[test]
+fn test_classify_claude_code() {
+    let conn = setup_db();
+    let rules = db_categories::list_rules(&conn).unwrap();
+
+    // Simulates what happens when TUI detector sees "claude" running in terminal
+    // and replaces app name with "Claude Code"
+    let snapshot = WatcherSnapshot {
+        app: "Claude Code".to_string(),
+        title: "bhavikpatel@Mac:~/projects".to_string(),
+        url: None,
+        url_domain: None,
+        is_afk: false,
+    };
+
+    let cat_id = categories::classify(&snapshot, &rules);
+    assert!(cat_id.is_some(), "Claude Code should be classified");
+
+    let cat = db_categories::get_category_by_id(&conn, cat_id.unwrap()).unwrap().unwrap();
+    assert_eq!(cat.name, "work/ai-tools");
+    assert_eq!(cat.productivity_score, 2.0);
+}
+
+#[test]
+fn test_classify_codex_cli() {
+    let conn = setup_db();
+    let rules = db_categories::list_rules(&conn).unwrap();
+
+    let snapshot = WatcherSnapshot {
+        app: "Codex CLI".to_string(),
+        title: "zsh".to_string(),
+        url: None,
+        url_domain: None,
+        is_afk: false,
+    };
+
+    let cat_id = categories::classify(&snapshot, &rules);
+    assert!(cat_id.is_some(), "Codex CLI should be classified");
+
+    let cat = db_categories::get_category_by_id(&conn, cat_id.unwrap()).unwrap().unwrap();
+    assert_eq!(cat.name, "work/ai-tools");
+}
+
+#[test]
+fn test_classify_aider() {
+    let conn = setup_db();
+    let rules = db_categories::list_rules(&conn).unwrap();
+
+    let snapshot = WatcherSnapshot {
+        app: "Aider".to_string(),
+        title: "aider".to_string(),
+        url: None,
+        url_domain: None,
+        is_afk: false,
+    };
+
+    let cat_id = categories::classify(&snapshot, &rules);
+    assert!(cat_id.is_some(), "Aider should be classified");
+
+    let cat = db_categories::get_category_by_id(&conn, cat_id.unwrap()).unwrap().unwrap();
+    assert_eq!(cat.name, "work/ai-tools");
+}
+
+#[test]
 fn test_case_insensitive_matching() {
     let conn = setup_db();
     let rules = db_categories::list_rules(&conn).unwrap();

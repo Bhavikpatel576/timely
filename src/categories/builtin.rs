@@ -11,6 +11,7 @@ pub const BUILTIN_CATEGORIES: &[(&str, Option<&str>, f64)] = &[
     ("inappropriate-content", None, -2.0),
     // Work subcategories
     ("work/coding", Some("work"), 2.0),
+    ("work/ai-tools", Some("work"), 2.0),
     ("work/terminal", Some("work"), 1.5),
     ("work/writing", Some("work"), 1.5),
     ("work/design", Some("work"), 1.0),
@@ -44,7 +45,17 @@ pub const BUILTIN_RULES: &[(&str, &str, &str, i32)] = &[
     ("work/coding", "app", "RustRover", 100),
     ("work/coding", "app", "Android Studio", 100),
     ("work/coding", "app", "Zed", 100),
-    // Terminals
+    // AI coding assistants (detected via TUI process watcher)
+    ("work/ai-tools", "app", "Claude Code", 110),
+    ("work/ai-tools", "app", "Codex CLI", 110),
+    ("work/ai-tools", "app", "Aider", 110),
+    ("work/ai-tools", "app", "Cursor CLI", 110),
+    // TUI editors (detected via TUI process watcher, higher priority than terminal)
+    ("work/coding", "app", "Helix", 100),
+    // TUI dev tools (detected via TUI process watcher)
+    ("work/coding", "app", "Lazygit", 95),
+    ("work/coding", "app", "Tig", 95),
+    // Terminals (base — used when no TUI app detected inside)
     ("work/terminal", "app", "Terminal", 90),
     ("work/terminal", "app", "iTerm2", 90),
     ("work/terminal", "app", "Alacritty", 90),

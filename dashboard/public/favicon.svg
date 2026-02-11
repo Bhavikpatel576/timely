@@ -1,0 +1,11 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100">
+  <circle cx="50" cy="50" r="45" fill="#0f172a" stroke="#3b82f6" stroke-width="4"/>
+  <line x1="50" y1="50" x2="50" y2="20" stroke="#f8fafc" stroke-width="4" stroke-linecap="round"/>
+  <line x1="50" y1="50" x2="72" y2="50" stroke="#3b82f6" stroke-width="3" stroke-linecap="round"/>
+  <circle cx="50" cy="50" r="3" fill="#3b82f6"/>
+  <!-- hour markers -->
+  <circle cx="50" cy="12" r="2" fill="#3b82f6"/>
+  <circle cx="88" cy="50" r="2" fill="#3b82f6"/>
+  <circle cx="50" cy="88" r="2" fill="#3b82f6"/>
+  <circle cx="12" cy="50" r="2" fill="#3b82f6"/>
+</svg>

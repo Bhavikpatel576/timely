@@ -4,6 +4,8 @@ pub mod afk_macos;
 pub mod window_macos;
 #[cfg(target_os = "macos")]
 pub mod browser_macos;
+#[cfg(target_os = "macos")]
+pub mod tui_macos;
 
 use crate::error::Result;
 use crate::types::WatcherSnapshot;
@@ -19,8 +21,19 @@ pub fn collect_snapshot() -> Result<WatcherSnapshot> {
             _ => (None, None),
         };
 
+        // If the active app is a terminal, try to detect the TUI process inside it
+        let app = if tui_macos::is_terminal_app(&window.app) {
+            if let Some(tui) = tui_macos::detect_tui_process() {
+                tui.app_name
+            } else {
+                window.app
+            }
+        } else {
+            window.app
+        };
+
         Ok(WatcherSnapshot {
-            app: window.app,
+            app,
             title: window.title,
             url,
             url_domain,
