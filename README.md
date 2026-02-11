@@ -395,6 +395,56 @@ VITE_API_PORT=8080 npx vite
 cargo test           # 38 tests: heartbeat, categories, queries, sync, unit tests
 ```
 
+## Releasing
+
+To publish a new version:
+
+```sh
+# Tag and push — CI handles everything else
+git tag v0.2.0
+git push origin v0.2.0
+```
+
+The release workflow (`.github/workflows/release.yml`) automatically:
+
+1. Builds the binary for both **arm64** and **x86_64** on macOS
+2. Bundles each into a signed `Timely.app`
+3. Uploads `.tar.gz` tarballs + SHA256 checksums to the GitHub release
+4. Downloads both tarballs, computes checksums, and updates the Homebrew formula in [`Bhavikpatel576/homebrew-tap`](https://github.com/Bhavikpatel576/homebrew-tap)
+
+After a release, users get the new version via:
+
+```sh
+brew upgrade timely
+# or
+curl -fsSL https://raw.githubusercontent.com/Bhavikpatel576/timely/main/install.sh | sh
+```
+
+### How the Homebrew tap works
+
+Homebrew taps are GitHub repos named `homebrew-<name>`. Ours is [`Bhavikpatel576/homebrew-tap`](https://github.com/Bhavikpatel576/homebrew-tap), which contains a single formula at `Formula/timely.rb`.
+
+When a user runs:
+
+```sh
+brew tap Bhavikpatel576/tap        # clones homebrew-tap repo locally
+brew install --no-quarantine timely # reads Formula/timely.rb, downloads the tarball
+```
+
+The formula detects the user's architecture (arm64 vs x86_64), downloads the correct tarball from GitHub Releases, extracts `Timely.app`, and symlinks the CLI binary to `bin/timely`.
+
+`--no-quarantine` is needed because the binary isn't notarized with Apple — without it, macOS Gatekeeper blocks the app.
+
+### CI secrets required
+
+| Secret | Purpose |
+|--------|---------|
+| `HOMEBREW_TAP_TOKEN` | GitHub PAT with repo scope — used to push formula updates to `homebrew-tap` |
+
+### One-time setup
+
+The tap repo was bootstrapped via the `setup-tap.yml` workflow. You only need to run it once (Actions → "Setup Homebrew Tap" → Run workflow).
+
 ## JSON Output Format
 
 All CLI commands with `--json` wrap responses in an envelope:
