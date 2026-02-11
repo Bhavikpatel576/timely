@@ -27,7 +27,7 @@ sed -i '' "s/version \".*\"/version \"$VERSION\"/" "$FORMULA_PATH"
 # Update SHA256 checksums — arm64 is the first sha256 line, x86_64 is the second
 # Use awk to replace them in order
 awk -v arm="$ARM64_SHA" -v x86="$X86_64_SHA" '
-  /sha256/ && !done_arm { sub(/sha256 ".*"/, "sha256 \"" arm "\""); done_arm=1; next }
+  /sha256/ && !done_arm { sub(/sha256 ".*"/, "sha256 \"" arm "\""); done_arm=1; print; next }
   /sha256/ && done_arm && !done_x86 { sub(/sha256 ".*"/, "sha256 \"" x86 "\""); done_x86=1 }
   { print }
 ' "$FORMULA_PATH" > "$FORMULA_PATH.tmp" && mv "$FORMULA_PATH.tmp" "$FORMULA_PATH"
