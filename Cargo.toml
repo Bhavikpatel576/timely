@@ -2,6 +2,10 @@
 name = "timely"
 version = "0.1.0"
 edition = "2021"
+description = "A lightweight, agent-friendly activity tracker for macOS"
+repository = "https://github.com/Bhavikpatel576/timely"
+license = "MIT"
+homepage = "https://github.com/Bhavikpatel576/timely"
 
 [dependencies]
 clap = { version = "4", features = ["derive"] }

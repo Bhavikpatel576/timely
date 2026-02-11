@@ -1,0 +1,39 @@
+name: Setup Homebrew Tap
+
+on:
+  workflow_dispatch:
+
+jobs:
+  setup:
+    runs-on: macos-14
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Create homebrew-tap repo (if it doesn't exist)
+        env:
+          GH_TOKEN: ${{ secrets.HOMEBREW_TAP_TOKEN }}
+        run: |
+          if gh repo view Bhavikpatel576/homebrew-tap &>/dev/null; then
+            echo "homebrew-tap repo already exists, skipping creation."
+          else
+            gh repo create Bhavikpatel576/homebrew-tap \
+              --public \
+              --description "Homebrew tap for Timely"
+            echo "Created homebrew-tap repo."
+          fi
+
+      - name: Push formula to tap
+        env:
+          GH_TOKEN: ${{ secrets.HOMEBREW_TAP_TOKEN }}
+        run: |
+          git clone "https://x-access-token:${GH_TOKEN}@github.com/Bhavikpatel576/homebrew-tap.git" tap-repo
+          mkdir -p tap-repo/Formula
+          cp Formula/timely.rb tap-repo/Formula/timely.rb
+          cd tap-repo
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git add Formula/timely.rb
+          git diff --cached --quiet && echo "Formula already up to date." && exit 0
+          git commit -m "Add timely formula"
+          git push
+          echo "Formula pushed successfully."

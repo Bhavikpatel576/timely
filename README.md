@@ -14,11 +14,25 @@ A lightweight, agent-friendly activity tracker for macOS. Timely runs as a backg
 
 ## Installation
 
+### Homebrew (recommended)
+
+```sh
+brew tap Bhavikpatel576/tap
+brew install --no-quarantine timely
+```
+
+After installing, grant Accessibility permissions and start the daemon:
+
+```sh
+# Open System Settings > Privacy & Security > Accessibility > add Timely
+timely daemon start
+```
+
 ### From source
 
 ```sh
 # Clone the repo
-git clone https://github.com/bhavikpatel/timely.git
+git clone https://github.com/Bhavikpatel576/timely.git
 cd timely
 
 # Build everything (dashboard + Rust binary)
@@ -31,7 +45,7 @@ cp target/release/timely /usr/local/bin/
 ### Install script
 
 ```sh
-curl -fsSL https://raw.githubusercontent.com/bhavikpatel/timely/main/install.sh | sh
+curl -fsSL https://raw.githubusercontent.com/Bhavikpatel576/timely/main/install.sh | sh
 ```
 
 ### Rust binary only (no dashboard)

@@ -4,7 +4,7 @@ set -e
 # Timely installer — installs Timely.app bundle to /Applications
 # Usage: curl -fsSL <raw-url>/install.sh | sh
 
-REPO="bhavikpatel/timely"
+REPO="Bhavikpatel576/timely"
 APP_DEST="/Applications/Timely.app"
 SYMLINK_PATH="/usr/local/bin/timely"
 
