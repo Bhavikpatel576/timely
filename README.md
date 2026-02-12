@@ -19,13 +19,14 @@ A lightweight, agent-friendly activity tracker for macOS. Timely runs as a backg
 
 ```sh
 brew tap Bhavikpatel576/tap
-brew install --no-quarantine timely
+brew install timely
 ```
 
 After installing, grant Accessibility permissions and start the daemon:
 
 ```sh
-# Open System Settings > Privacy & Security > Accessibility > add Timely
+# Open System Settings > Privacy & Security > Accessibility
+# Click '+' and add the terminal you run timely from
 timely daemon start
 ```
 

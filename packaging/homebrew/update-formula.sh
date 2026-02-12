@@ -24,8 +24,11 @@ echo "  x86_64 SHA: $X86_64_SHA"
 # Update version
 sed -i '' "s/version \".*\"/version \"$VERSION\"/" "$FORMULA_PATH"
 
+# Update download URLs to use -bin tarballs
+sed -i '' "s|-arm64-apple-darwin-bin.tar.gz|-arm64-apple-darwin-bin.tar.gz|g" "$FORMULA_PATH"
+sed -i '' "s|-x86_64-apple-darwin-bin.tar.gz|-x86_64-apple-darwin-bin.tar.gz|g" "$FORMULA_PATH"
+
 # Update SHA256 checksums — arm64 is the first sha256 line, x86_64 is the second
-# Use awk to replace them in order
 awk -v arm="$ARM64_SHA" -v x86="$X86_64_SHA" '
   /sha256/ && !done_arm { sub(/sha256 ".*"/, "sha256 \"" arm "\""); done_arm=1; print; next }
   /sha256/ && done_arm && !done_x86 { sub(/sha256 ".*"/, "sha256 \"" x86 "\""); done_x86=1 }

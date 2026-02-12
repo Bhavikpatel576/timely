@@ -6,10 +6,10 @@ class Timely < Formula
 
   on_macos do
     if Hardware::CPU.arm?
-      url "https://github.com/Bhavikpatel576/timely/releases/download/v#{version}/timely-v#{version}-arm64-apple-darwin.tar.gz"
+      url "https://github.com/Bhavikpatel576/timely/releases/download/v#{version}/timely-v#{version}-arm64-apple-darwin-bin.tar.gz"
       sha256 "PLACEHOLDER_ARM64_SHA256"
     else
-      url "https://github.com/Bhavikpatel576/timely/releases/download/v#{version}/timely-v#{version}-x86_64-apple-darwin.tar.gz"
+      url "https://github.com/Bhavikpatel576/timely/releases/download/v#{version}/timely-v#{version}-x86_64-apple-darwin-bin.tar.gz"
       sha256 "PLACEHOLDER_X86_64_SHA256"
     end
   end
@@ -17,9 +17,7 @@ class Timely < Formula
   depends_on :macos
 
   def install
-    # The tarball contains Timely.app bundle
-    prefix.install "Timely.app"
-    bin.write_exec_script prefix/"Timely.app/Contents/MacOS/timely"
+    bin.install "timely"
   end
 
   def caveats
@@ -28,7 +26,7 @@ class Timely < Formula
 
       After installing, grant access:
         1. Open System Settings > Privacy & Security > Accessibility
-        2. Click '+' and add Timely (or the terminal you run it from)
+        2. Click '+' and add the terminal you run timely from
 
       Start the background daemon:
         timely daemon start
