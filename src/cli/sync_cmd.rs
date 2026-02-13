@@ -6,7 +6,7 @@ use crate::error::Result;
 use crate::output;
 use crate::sync::client;
 
-pub fn cmd_setup(hub: &str, key: Option<&str>) -> Result<()> {
+pub fn cmd_setup(hub: &str, key: Option<&str>, json: bool) -> Result<()> {
     let conn = db::open_default_db()?;
     let device = devices::get_or_create_device(&conn)?;
 
@@ -21,30 +21,42 @@ pub fn cmd_setup(hub: &str, key: Option<&str>) -> Result<()> {
     eprintln!("Registering device '{}' with hub at {}...", device.name, hub);
     client::register_with_hub(&conn, &device)?;
 
-    output::print_json(&serde_json::json!({
-        "hub_url": hub,
-        "device_id": device.id,
-        "device_name": device.name,
-        "registered": true,
-        "sync_enabled": true,
-        "auth": key.is_some(),
-    }));
+    if json {
+        output::print_json(&serde_json::json!({
+            "hub_url": hub,
+            "device_id": device.id,
+            "device_name": device.name,
+            "registered": true,
+            "sync_enabled": true,
+            "auth": key.is_some(),
+        }));
+    } else {
+        println!("Sync configured");
+        println!("  Hub:    {}", hub);
+        println!("  Device: {} ({})", device.name, device.id);
+        println!("  Auth:   {}", if key.is_some() { "yes" } else { "no" });
+    }
 
     Ok(())
 }
 
-pub fn cmd_push() -> Result<()> {
+pub fn cmd_push(json: bool) -> Result<()> {
     let conn = db::open_default_db()?;
     let device = devices::get_or_create_device(&conn)?;
 
     eprintln!("Pushing unsynced events to hub...");
     let result = client::push_events(&conn, &device)?;
 
-    output::print_json(&serde_json::json!({
-        "accepted": result.total_accepted,
-        "duplicates": result.total_duplicates,
-        "batches": result.batches,
-    }));
+    if json {
+        output::print_json(&serde_json::json!({
+            "accepted": result.total_accepted,
+            "duplicates": result.total_duplicates,
+            "batches": result.batches,
+        }));
+    } else {
+        println!("Push complete: {} accepted, {} duplicates ({} batches)",
+            result.total_accepted, result.total_duplicates, result.batches);
+    }
 
     Ok(())
 }

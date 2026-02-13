@@ -80,10 +80,13 @@ timely dashboard
 Manage the background activity tracker.
 
 ```sh
-timely daemon start      # Start via launchd (persists across reboots)
-timely daemon stop       # Stop the daemon
-timely daemon status     # Check if running (add --json for structured output)
-timely daemon run        # Run in foreground (useful for debugging)
+timely daemon start              # Start via launchd (persists across reboots)
+timely daemon start --json       # JSON confirmation
+timely daemon stop               # Stop the daemon
+timely daemon stop --json        # JSON confirmation
+timely daemon status             # Check if running
+timely daemon status --json      # Structured status output
+timely daemon run                # Run in foreground (useful for debugging)
 ```
 
 ### `timely now`
@@ -137,19 +140,20 @@ Manage category rules. Rules map app names, window titles, or URL domains to cat
 timely categorize set Figma work/design --field app
 
 # Assign github.com to work/coding, and apply to existing events
-timely categorize set github.com work/coding --field url_domain --retroactive
+timely categorize set github.com work/coding --field url_domain --retroactive --json
 
 # List all rules
 timely categorize list --json
 
 # Delete a user rule by ID
-timely categorize delete 42
+timely categorize delete 42 --json
 ```
 
 | Flag | Default | Description |
 |------|---------|-------------|
 | `--field` | `app` | Field to match: `app`, `title`, or `url_domain` |
 | `--retroactive` | false | Recategorize existing events matching this rule |
+| `--json` | false | Output as JSON envelope |
 
 ### `timely dashboard`
 
@@ -165,8 +169,8 @@ timely dashboard --port 9090    # Custom port
 Manage configuration key-value pairs.
 
 ```sh
-timely config set key value
-timely config get key
+timely config set key value --json   # Returns {"ok": true, "data": {"key": ..., "value": ...}}
+timely config get key --json         # Returns {"ok": true, "data": {"key": ..., "value": ...}}
 timely config list --json
 ```
 
@@ -184,7 +188,7 @@ Export and import activity data.
 
 ```sh
 timely export --format json --from 7d --to now > backup.json
-timely import backup.json
+timely import backup.json --json  # Returns {"ok": true, "data": {"imported": N, "file": ...}}
 ```
 
 ## Web Dashboard API
@@ -301,8 +305,8 @@ timely sync status --json
 
 | Command | Description |
 |---------|-------------|
-| `timely sync setup --hub URL [--key KEY]` | Configure sync with a hub. Registers device, enables auto-push. |
-| `timely sync push` | Push all unsynced events to hub now. |
+| `timely sync setup --hub URL [--key KEY] [--json]` | Configure sync with a hub. Registers device, enables auto-push. |
+| `timely sync push [--json]` | Push all unsynced events to hub now. |
 | `timely sync status [--json]` | Show hub URL, reachability, pending events, registered devices. |
 
 ### How it works
@@ -395,7 +399,7 @@ VITE_API_PORT=8080 npx vite
 ### Running Tests
 
 ```sh
-cargo test           # 38 tests: heartbeat, categories, queries, sync, unit tests
+cargo test           # 43 tests: heartbeat, categories, queries, sync, unit tests
 ```
 
 ## Releasing
@@ -450,22 +454,72 @@ The tap repo was bootstrapped via the `setup-tap.yml` workflow. You only need to
 
 ## JSON Output Format
 
-All CLI commands with `--json` wrap responses in an envelope:
+All CLI commands with `--json` wrap responses in a standard envelope:
 
 ```json
-// Success
+// Success (exit code 0, stdout)
 {
   "ok": true,
   "data": { ... }
 }
 
-// Error
+// Error (exit code 1, stderr)
 {
   "ok": false,
   "error": "No data for the requested time range",
   "error_code": "no_data"
 }
 ```
+
+### Error Codes
+
+| Code | Meaning |
+|------|---------|
+| `db_error` | SQLite database error |
+| `io_error` | File system or I/O error |
+| `json_error` | JSON parse/serialize error |
+| `config_error` | Missing or invalid configuration |
+| `daemon_not_running` | Daemon is not running (for `daemon stop`) |
+| `daemon_already_running` | Daemon is already running (for `daemon start`) |
+| `no_data` | No events found for the requested time range |
+| `invalid_time_range` | Unparseable `--from` or `--to` value |
+| `category_not_found` | Category name not found |
+| `rule_not_found` | Category rule ID not found |
+| `platform_not_supported` | Feature not available on this OS |
+| `sync_error` | Sync push/register failure |
+| `error` | Generic error |
+
+### Staleness Detection
+
+The `now --json` response includes a `"stale"` field:
+
+```json
+{
+  "ok": true,
+  "data": {
+    "app": "Code",
+    "title": "main.rs",
+    "stale": true,
+    ...
+  }
+}
+```
+
+When `"stale": true`, the daemon has stopped and the data shows the **last recorded** activity, not the current one. Agents should check this field and prompt the user to start the daemon.
+
+### Time Range Format
+
+Used by `--from` and `--to` flags:
+
+| Format | Example | Meaning |
+|--------|---------|---------|
+| `now` | `--from now` | Current time |
+| `today` | `--from today` | Start of today (00:00 local) |
+| `yesterday` | `--from yesterday` | Start of yesterday |
+| `Nd` | `--from 7d` | N days ago |
+| `Nh` | `--from 2h` | N hours ago |
+| `Nm` | `--from 30m` | N minutes ago |
+| `YYYY-MM-DD` | `--from 2026-01-15` | Specific date |
 
 ## License
 

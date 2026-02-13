@@ -17,8 +17,22 @@ pub fn cmd_summary(from: &str, to: &str, by: &str, json: bool, all_devices: bool
         let device_param = if all_devices { Some("all") } else { device };
         let result = client::fetch_remote_summary(&hub_url, &api_key, from, to, by, device_param)?;
 
-        // Print the response directly — it's already formatted from the hub
-        println!("{}", serde_json::to_string_pretty(&output::success(&result)).unwrap());
+        if json {
+            println!("{}", serde_json::to_string_pretty(&output::success(&result)).unwrap());
+        } else {
+            println!("Activity Summary ({} to {}) [remote]", from, to);
+            if let Some(groups) = result.get("groups").and_then(|g| g.as_array()) {
+                println!("{:-<60}", "");
+                for g in groups {
+                    let label = g.get("name").or_else(|| g.get("label"))
+                        .and_then(|v| v.as_str()).unwrap_or("?");
+                    let time = g.get("time").and_then(|v| v.as_str()).unwrap_or("?");
+                    let pct = g.get("pct").or_else(|| g.get("percentage"))
+                        .and_then(|v| v.as_f64()).unwrap_or(0.0);
+                    println!("{:<30} {:>8}  {:>5.1}%", label, time, pct);
+                }
+            }
+        }
         return Ok(());
     }
 

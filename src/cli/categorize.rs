@@ -3,7 +3,7 @@ use crate::db::categories as db_categories;
 use crate::error::{Result, TimelyError};
 use crate::output;
 
-pub fn cmd_set(pattern: &str, category: &str, field: &str, retroactive: bool) -> Result<()> {
+pub fn cmd_set(pattern: &str, category: &str, field: &str, retroactive: bool, json: bool) -> Result<()> {
     let conn = db::open_default_db()?;
     db_categories::seed_builtin_categories(&conn)?;
 
@@ -27,12 +27,25 @@ pub fn cmd_set(pattern: &str, category: &str, field: &str, retroactive: bool) ->
 
     // User rules get priority 200 (above builtins)
     db_categories::insert_rule(&conn, cat.id, field, pattern, false, 200)?;
-    println!("Rule added: {} '{}' -> {}", field, pattern, category);
 
+    let mut retroactive_count = 0;
     if retroactive {
-        // Re-classify existing events matching this pattern
-        let count = reclassify_matching(&conn, field, pattern, cat.id)?;
-        println!("Retroactively updated {} events", count);
+        retroactive_count = reclassify_matching(&conn, field, pattern, cat.id)?;
+    }
+
+    if json {
+        output::print_json(&serde_json::json!({
+            "field": field,
+            "pattern": pattern,
+            "category": category,
+            "category_id": cat.id,
+            "retroactive_updates": retroactive_count,
+        }));
+    } else {
+        println!("Rule added: {} '{}' -> {}", field, pattern, category);
+        if retroactive {
+            println!("Retroactively updated {} events", retroactive_count);
+        }
     }
 
     Ok(())
@@ -65,10 +78,17 @@ pub fn cmd_list(json: bool) -> Result<()> {
     Ok(())
 }
 
-pub fn cmd_delete(id: i64) -> Result<()> {
+pub fn cmd_delete(id: i64, json: bool) -> Result<()> {
     let conn = db::open_default_db()?;
     if db_categories::delete_rule(&conn, id)? {
-        println!("Rule {} deleted", id);
+        if json {
+            output::print_json(&serde_json::json!({
+                "deleted": true,
+                "rule_id": id,
+            }));
+        } else {
+            println!("Rule {} deleted", id);
+        }
     } else {
         return Err(TimelyError::RuleNotFound(id));
     }

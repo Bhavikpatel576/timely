@@ -3,7 +3,7 @@ use crate::error::{Result, TimelyError};
 use crate::output;
 use crate::types::DaemonStatus;
 
-pub fn cmd_start() -> Result<()> {
+pub fn cmd_start(json: bool) -> Result<()> {
     // Check if already running
     if let Some(pid) = read_pid()? {
         if is_process_alive(pid) {
@@ -65,7 +65,14 @@ pub fn cmd_start() -> Result<()> {
             .status()?;
 
         if status.success() {
-            println!("Daemon started via launchd");
+            if json {
+                output::print_json(&serde_json::json!({
+                    "started": true,
+                    "method": "launchd",
+                }));
+            } else {
+                println!("Daemon started via launchd");
+            }
         } else {
             return Err(TimelyError::Generic("Failed to load launchd plist".into()));
         }
@@ -73,6 +80,7 @@ pub fn cmd_start() -> Result<()> {
 
     #[cfg(not(target_os = "macos"))]
     {
+        let _ = json;
         return Err(TimelyError::PlatformNotSupported(
             "daemon start only supported on macOS (launchd)".into(),
         ));
@@ -81,7 +89,7 @@ pub fn cmd_start() -> Result<()> {
     Ok(())
 }
 
-pub fn cmd_stop() -> Result<()> {
+pub fn cmd_stop(json: bool) -> Result<()> {
     #[cfg(target_os = "macos")]
     {
         // Try launchctl remove first
@@ -93,7 +101,11 @@ pub fn cmd_stop() -> Result<()> {
             if s.success() {
                 // Clean up PID file
                 let _ = std::fs::remove_file(config::pid_path()?);
-                println!("Daemon stopped");
+                if json {
+                    output::print_json(&serde_json::json!({ "stopped": true }));
+                } else {
+                    println!("Daemon stopped");
+                }
                 return Ok(());
             }
         }
@@ -105,7 +117,11 @@ pub fn cmd_stop() -> Result<()> {
                     libc::kill(pid as i32, libc::SIGTERM);
                 }
                 let _ = std::fs::remove_file(config::pid_path()?);
-                println!("Daemon stopped (pid {})", pid);
+                if json {
+                    output::print_json(&serde_json::json!({ "stopped": true, "pid": pid }));
+                } else {
+                    println!("Daemon stopped (pid {})", pid);
+                }
                 return Ok(());
             }
         }
@@ -121,7 +137,11 @@ pub fn cmd_stop() -> Result<()> {
                     libc::kill(pid as i32, libc::SIGTERM);
                 }
                 let _ = std::fs::remove_file(config::pid_path()?);
-                println!("Daemon stopped (pid {})", pid);
+                if json {
+                    output::print_json(&serde_json::json!({ "stopped": true, "pid": pid }));
+                } else {
+                    println!("Daemon stopped (pid {})", pid);
+                }
                 return Ok(());
             }
         }

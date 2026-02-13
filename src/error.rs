@@ -20,7 +20,7 @@ pub enum TimelyError {
     #[error("Daemon already running (pid {0})")]
     DaemonAlreadyRunning(u32),
 
-    #[error("No data for the requested time range")]
+    #[error("No data for the requested time range. Is the daemon running? Check: timely daemon status")]
     NoData,
 
     #[error("Invalid time range: {0}")]

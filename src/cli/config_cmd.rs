@@ -3,18 +3,33 @@ use crate::db::config_store;
 use crate::error::Result;
 use crate::output;
 
-pub fn cmd_set(key: &str, value: &str) -> Result<()> {
+pub fn cmd_set(key: &str, value: &str, json: bool) -> Result<()> {
     let conn = db::open_default_db()?;
     config_store::set(&conn, key, value)?;
-    println!("{} = {}", key, value);
+    if json {
+        output::print_json(&serde_json::json!({
+            "key": key,
+            "value": value,
+        }));
+    } else {
+        println!("{} = {}", key, value);
+    }
     Ok(())
 }
 
-pub fn cmd_get(key: &str) -> Result<()> {
+pub fn cmd_get(key: &str, json: bool) -> Result<()> {
     let conn = db::open_default_db()?;
-    match config_store::get(&conn, key)? {
-        Some(value) => println!("{} = {}", key, value),
-        None => println!("{} is not set", key),
+    let value = config_store::get(&conn, key)?;
+    if json {
+        output::print_json(&serde_json::json!({
+            "key": key,
+            "value": value,
+        }));
+    } else {
+        match value {
+            Some(v) => println!("{} = {}", key, v),
+            None => println!("{} is not set", key),
+        }
     }
     Ok(())
 }

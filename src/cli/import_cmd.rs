@@ -1,9 +1,10 @@
 use crate::db;
 use crate::db::{devices, events};
 use crate::error::Result;
+use crate::output;
 use crate::types::Event;
 
-pub fn cmd_import(file: &str) -> Result<()> {
+pub fn cmd_import(file: &str, json: bool) -> Result<()> {
     let content = std::fs::read_to_string(file)?;
 
     // Try parsing as JSON envelope first
@@ -37,6 +38,13 @@ pub fn cmd_import(file: &str) -> Result<()> {
         count += 1;
     }
 
-    println!("Imported {} events", count);
+    if json {
+        output::print_json(&serde_json::json!({
+            "imported": count,
+            "file": file,
+        }));
+    } else {
+        println!("Imported {} events", count);
+    }
     Ok(())
 }

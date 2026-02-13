@@ -17,7 +17,31 @@ pub fn cmd_timeline(from: &str, to: &str, limit: Option<i64>, json: bool, all_de
         let device_param = if all_devices { Some("all") } else { device };
         let result = client::fetch_remote_timeline(&hub_url, &api_key, from, to, limit, device_param)?;
 
-        println!("{}", serde_json::to_string_pretty(&output::success(&result)).unwrap());
+        if json {
+            println!("{}", serde_json::to_string_pretty(&output::success(&result)).unwrap());
+        } else {
+            println!("Timeline ({} to {}) [remote]", from, to);
+            println!("{:-<70}", "");
+            if let Some(entries) = result.get("entries").and_then(|e| e.as_array()) {
+                for entry in entries {
+                    let ts = entry.get("timestamp").and_then(|v| v.as_str()).unwrap_or("?");
+                    let app = entry.get("app").and_then(|v| v.as_str()).unwrap_or("?");
+                    let title = entry.get("title").and_then(|v| v.as_str()).unwrap_or("?");
+                    let dur = entry.get("duration").or_else(|| entry.get("duration_seconds"))
+                        .and_then(|v| v.as_f64()).unwrap_or(0.0);
+                    let cat = entry.get("category").and_then(|v| v.as_str()).unwrap_or("-");
+                    let time_str = if ts.len() >= 19 { &ts[11..19] } else { ts };
+                    println!("{} {:>8}  {:<20} {:<30} {}",
+                        time_str,
+                        crate::types::format_duration(dur),
+                        app,
+                        truncate(title, 30),
+                        cat,
+                    );
+                }
+                println!("\n{} entries", entries.len());
+            }
+        }
         return Ok(());
     }
 

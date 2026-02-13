@@ -11,6 +11,11 @@ pub fn process_heartbeat(
     device_id: &str,
     snapshot: &WatcherSnapshot,
 ) -> Result<()> {
+    // Skip empty snapshots (e.g. no focused window)
+    if snapshot.app.is_empty() {
+        return Ok(());
+    }
+
     let now = Utc::now();
 
     // Load rules for classification

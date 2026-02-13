@@ -13,7 +13,26 @@ pub mod sync_cmd;
 use clap::{Parser, Subcommand};
 
 #[derive(Parser)]
-#[command(name = "timely", about = "Agent-friendly activity tracker", version)]
+#[command(
+    name = "timely",
+    about = "Agent-friendly activity tracker",
+    long_about = "Agent-friendly activity tracker for macOS.\n\n\
+        All commands support --json for structured output using a standard envelope:\n  \
+        Success: {\"ok\": true, \"data\": ...}\n  \
+        Error:   {\"ok\": false, \"error\": \"...\", \"error_code\": \"...\"}\n\n\
+        Exit codes: 0 = success, 1 = error (with JSON on stderr).",
+    version,
+    after_help = "EXAMPLES:\n  \
+        timely daemon start            Start the background daemon\n  \
+        timely now --json              Current activity as JSON\n  \
+        timely summary --json          Today's summary as JSON\n  \
+        timely summary --from 2d --json  Last 2 days summary\n  \
+        timely timeline --from 1h --json  Last hour timeline\n  \
+        timely categorize set Code work/coding --field app\n  \
+        timely config set sync.enabled true\n\n\
+        TIME RANGES:\n  \
+        now, today, yesterday, Nd (days), Nh (hours), Nm (minutes), YYYY-MM-DD"
+)]
 pub struct Cli {
     #[command(subcommand)]
     pub command: Commands,
@@ -28,7 +47,7 @@ pub enum Commands {
     },
     /// Show current activity
     Now {
-        /// Output as JSON
+        /// Output as JSON envelope: {"ok": true, "data": ...}
         #[arg(long)]
         json: bool,
         /// Query all devices via hub
@@ -49,7 +68,7 @@ pub enum Commands {
         /// Group by: category, app, or url
         #[arg(long, default_value = "category")]
         by: String,
-        /// Output as JSON
+        /// Output as JSON envelope: {"ok": true, "data": ...}
         #[arg(long)]
         json: bool,
         /// Query all devices via hub
@@ -70,7 +89,7 @@ pub enum Commands {
         /// Limit number of entries
         #[arg(long)]
         limit: Option<i64>,
-        /// Output as JSON
+        /// Output as JSON envelope: {"ok": true, "data": ...}
         #[arg(long)]
         json: bool,
         /// Query all devices via hub
@@ -111,6 +130,9 @@ pub enum Commands {
     Import {
         /// Path to import file (JSON)
         file: String,
+        /// Output as JSON envelope: {"ok": true, "data": ...}
+        #[arg(long)]
+        json: bool,
     },
     /// Launch the web dashboard
     Dashboard {
@@ -128,12 +150,20 @@ pub enum Commands {
 #[derive(Subcommand)]
 pub enum DaemonAction {
     /// Start the daemon (via launchd on macOS)
-    Start,
+    Start {
+        /// Output as JSON envelope: {"ok": true, "data": ...}
+        #[arg(long)]
+        json: bool,
+    },
     /// Stop the daemon
-    Stop,
+    Stop {
+        /// Output as JSON envelope: {"ok": true, "data": ...}
+        #[arg(long)]
+        json: bool,
+    },
     /// Check daemon status
     Status {
-        /// Output as JSON
+        /// Output as JSON envelope: {"ok": true, "data": ...}
         #[arg(long)]
         json: bool,
     },
@@ -155,10 +185,13 @@ pub enum CategorizeAction {
         /// Apply retroactively to existing events
         #[arg(long)]
         retroactive: bool,
+        /// Output as JSON envelope: {"ok": true, "data": ...}
+        #[arg(long)]
+        json: bool,
     },
     /// List all category rules
     List {
-        /// Output as JSON
+        /// Output as JSON envelope: {"ok": true, "data": ...}
         #[arg(long)]
         json: bool,
     },
@@ -166,6 +199,9 @@ pub enum CategorizeAction {
     Delete {
         /// Rule ID to delete
         id: i64,
+        /// Output as JSON envelope: {"ok": true, "data": ...}
+        #[arg(long)]
+        json: bool,
     },
 }
 
@@ -175,14 +211,20 @@ pub enum ConfigAction {
     Set {
         key: String,
         value: String,
+        /// Output as JSON envelope: {"ok": true, "data": ...}
+        #[arg(long)]
+        json: bool,
     },
     /// Get a config value
     Get {
         key: String,
+        /// Output as JSON envelope: {"ok": true, "data": ...}
+        #[arg(long)]
+        json: bool,
     },
     /// List all config values
     List {
-        /// Output as JSON
+        /// Output as JSON envelope: {"ok": true, "data": ...}
         #[arg(long)]
         json: bool,
     },
@@ -192,7 +234,7 @@ pub enum ConfigAction {
 pub enum DevicesAction {
     /// List registered devices
     List {
-        /// Output as JSON
+        /// Output as JSON envelope: {"ok": true, "data": ...}
         #[arg(long)]
         json: bool,
     },
@@ -208,12 +250,19 @@ pub enum SyncAction {
         /// Shared API key for authentication (optional — omit for open-mode hubs)
         #[arg(long)]
         key: Option<String>,
+        /// Output as JSON envelope: {"ok": true, "data": ...}
+        #[arg(long)]
+        json: bool,
     },
     /// Push unsynced events to hub
-    Push,
+    Push {
+        /// Output as JSON envelope: {"ok": true, "data": ...}
+        #[arg(long)]
+        json: bool,
+    },
     /// Show sync status
     Status {
-        /// Output as JSON
+        /// Output as JSON envelope: {"ok": true, "data": ...}
         #[arg(long)]
         json: bool,
     },

@@ -104,6 +104,7 @@ pub struct NowResponse {
     pub duration_seconds: f64,
     pub duration_time: String,
     pub is_afk: bool,
+    pub stale: bool,
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
