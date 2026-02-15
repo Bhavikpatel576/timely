@@ -4,6 +4,7 @@ pub mod apps;
 pub mod productivity;
 pub mod trends;
 pub mod current;
+pub mod focus;
 
 use chrono::{DateTime, Duration, Local, NaiveDate, Utc};
 use crate::error::{Result, TimelyError};

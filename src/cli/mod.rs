@@ -9,6 +9,8 @@ pub mod export;
 pub mod import_cmd;
 pub mod dashboard;
 pub mod sync_cmd;
+pub mod focus;
+pub mod trends;
 
 use clap::{Parser, Subcommand};
 
@@ -144,6 +146,33 @@ pub enum Commands {
     Sync {
         #[command(subcommand)]
         action: SyncAction,
+    },
+    /// Analyze focus and context switching
+    Focus {
+        /// Start time (default: today)
+        #[arg(long, default_value = "today")]
+        from: String,
+        /// End time (default: now)
+        #[arg(long, default_value = "now")]
+        to: String,
+        /// Output as JSON envelope: {"ok": true, "data": ...}
+        #[arg(long)]
+        json: bool,
+    },
+    /// Show activity trends over time
+    Trends {
+        /// Start time (default: 7d)
+        #[arg(long, default_value = "7d")]
+        from: String,
+        /// End time (default: now)
+        #[arg(long, default_value = "now")]
+        to: String,
+        /// Bucket interval: hour, day, week, or month
+        #[arg(long, default_value = "day")]
+        interval: String,
+        /// Output as JSON envelope: {"ok": true, "data": ...}
+        #[arg(long)]
+        json: bool,
     },
 }
 

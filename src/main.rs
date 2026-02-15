@@ -48,6 +48,12 @@ fn main() {
             SyncAction::Push { json } => cli::sync_cmd::cmd_push(json),
             SyncAction::Status { json } => cli::sync_cmd::cmd_status(json),
         },
+        Commands::Focus { from, to, json } => {
+            cli::focus::cmd_focus(&from, &to, json)
+        }
+        Commands::Trends { from, to, interval, json } => {
+            cli::trends::cmd_trends(&from, &to, &interval, json)
+        }
     };
 
     if let Err(e) = result {

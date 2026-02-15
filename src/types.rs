@@ -214,6 +214,47 @@ pub struct SyncPushResponse {
     pub batches: usize,
 }
 
+// --- Focus analytics types ---
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct DeepWorkBlock {
+    pub start: String,
+    pub end: String,
+    pub duration_seconds: f64,
+    pub duration_time: String,
+    pub category: String,
+    pub apps: Vec<String>,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct DistractionEntry {
+    pub app: String,
+    pub switches_to: u32,
+    pub total_seconds: f64,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct FocusResponse {
+    pub from: String,
+    pub to: String,
+    pub total_active_seconds: f64,
+    pub total_active_time: String,
+    pub focus_score: u32,
+    pub context_switches: u32,
+    pub switches_per_hour: f64,
+    pub deep_work_blocks: Vec<DeepWorkBlock>,
+    pub longest_focus_minutes: f64,
+    pub top_distractions: Vec<DistractionEntry>,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct TrendsResponse {
+    pub from: String,
+    pub to: String,
+    pub interval: String,
+    pub buckets: Vec<TrendBucket>,
+}
+
 pub fn format_duration(seconds: f64) -> String {
     let total = seconds as u64;
     let h = total / 3600;
