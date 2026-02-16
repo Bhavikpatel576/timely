@@ -11,6 +11,7 @@ pub mod dashboard;
 pub mod sync_cmd;
 pub mod focus;
 pub mod trends;
+pub mod update;
 
 use clap::{Parser, Subcommand};
 
@@ -158,6 +159,18 @@ pub enum Commands {
         /// End time (default: now)
         #[arg(long, default_value = "now")]
         to: String,
+        /// Output as JSON envelope: {"ok": true, "data": ...}
+        #[arg(long)]
+        json: bool,
+    },
+    /// Check for and apply updates
+    Update {
+        /// Only check for updates, don't apply
+        #[arg(long)]
+        check: bool,
+        /// Don't restart the daemon after updating
+        #[arg(long)]
+        no_restart: bool,
         /// Output as JSON envelope: {"ok": true, "data": ...}
         #[arg(long)]
         json: bool,

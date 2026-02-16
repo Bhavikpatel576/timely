@@ -64,17 +64,34 @@ pub fn cmd_start(json: bool) -> Result<()> {
             .arg(&plist_path)
             .status()?;
 
-        if status.success() {
-            if json {
-                output::print_json(&serde_json::json!({
-                    "started": true,
-                    "method": "launchd",
-                }));
-            } else {
-                println!("Daemon started via launchd");
-            }
-        } else {
+        if !status.success() {
             return Err(TimelyError::Generic("Failed to load launchd plist".into()));
+        }
+
+        // Non-blocking update check (never fail the command)
+        let update_version = crate::cli::update::check_for_update()
+            .ok()
+            .filter(|c| c.update_available)
+            .map(|c| c.latest_version);
+
+        if json {
+            let mut data = serde_json::json!({
+                "started": true,
+                "method": "launchd",
+            });
+            if let Some(ref ver) = update_version {
+                data["update_available"] = serde_json::json!(ver);
+            }
+            output::print_json(&data);
+        } else {
+            println!("Daemon started via launchd");
+            if let Some(ver) = update_version {
+                eprintln!(
+                    "Note: timely {} is available (you have {}). Run `timely update` to upgrade.",
+                    ver,
+                    env!("CARGO_PKG_VERSION")
+                );
+            }
         }
     }
 

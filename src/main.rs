@@ -51,6 +51,9 @@ fn main() {
         Commands::Focus { from, to, json } => {
             cli::focus::cmd_focus(&from, &to, json)
         }
+        Commands::Update { check, no_restart, json } => {
+            cli::update::cmd_update(check, no_restart, json)
+        }
         Commands::Trends { from, to, interval, json } => {
             cli::trends::cmd_trends(&from, &to, &interval, json)
         }
