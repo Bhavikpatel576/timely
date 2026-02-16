@@ -70,6 +70,9 @@ pub enum Commands {
         /// Group by: category, app, or url
         #[arg(long, default_value = "category")]
         by: String,
+        /// Exclude AFK/passive time from the summary
+        #[arg(long)]
+        exclude_afk: bool,
         /// Output as JSON envelope: {"ok": true, "data": ...}
         #[arg(long)]
         json: bool,

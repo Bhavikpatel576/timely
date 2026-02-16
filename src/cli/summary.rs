@@ -6,7 +6,7 @@ use crate::query;
 use crate::query::summary::{self, GroupBy};
 use crate::sync::client;
 
-pub fn cmd_summary(from: &str, to: &str, by: &str, json: bool, all_devices: bool, device: Option<&str>) -> Result<()> {
+pub fn cmd_summary(from: &str, to: &str, by: &str, exclude_afk: bool, json: bool, all_devices: bool, device: Option<&str>) -> Result<()> {
     // Remote query mode: when --all-devices or --device is set
     if all_devices || device.is_some() {
         let conn = db::open_default_db()?;
@@ -15,7 +15,7 @@ pub fn cmd_summary(from: &str, to: &str, by: &str, json: bool, all_devices: bool
         let api_key = config_store::get(&conn, "sync.api_key")?;
 
         let device_param = if all_devices { Some("all") } else { device };
-        let result = client::fetch_remote_summary(&hub_url, &api_key, from, to, by, device_param)?;
+        let result = client::fetch_remote_summary(&hub_url, &api_key, from, to, by, exclude_afk, device_param)?;
 
         if json {
             println!("{}", serde_json::to_string_pretty(&output::success(&result)).unwrap());
@@ -47,7 +47,7 @@ pub fn cmd_summary(from: &str, to: &str, by: &str, json: bool, all_devices: bool
     };
 
     let conn = db::open_default_db()?;
-    let result = summary::build_summary(&conn, &from_dt, &to_dt, group_by)?;
+    let result = summary::build_summary(&conn, &from_dt, &to_dt, group_by, exclude_afk)?;
 
     if json {
         output::print_json(&result);

@@ -17,8 +17,8 @@ fn main() {
         Commands::Now { json, all_devices, device } => {
             cli::now::cmd_now(json, all_devices, device.as_deref())
         }
-        Commands::Summary { from, to, by, json, all_devices, device } => {
-            cli::summary::cmd_summary(&from, &to, &by, json, all_devices, device.as_deref())
+        Commands::Summary { from, to, by, exclude_afk, json, all_devices, device } => {
+            cli::summary::cmd_summary(&from, &to, &by, exclude_afk, json, all_devices, device.as_deref())
         }
         Commands::Timeline { from, to, limit, json, all_devices, device } => {
             cli::timeline::cmd_timeline(&from, &to, limit, json, all_devices, device.as_deref())

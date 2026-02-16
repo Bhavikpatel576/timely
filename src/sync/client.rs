@@ -195,6 +195,7 @@ pub fn fetch_remote_summary(
     from: &str,
     to: &str,
     group_by: &str,
+    exclude_afk: bool,
     device: Option<&str>,
 ) -> Result<serde_json::Value> {
     let client = reqwest::blocking::Client::new();
@@ -205,6 +206,9 @@ pub fn fetch_remote_summary(
         to,
         group_by,
     );
+    if exclude_afk {
+        url.push_str("&excludeAfk=true");
+    }
     if let Some(dev) = device {
         url.push_str(&format!("&device={}", dev));
     }
