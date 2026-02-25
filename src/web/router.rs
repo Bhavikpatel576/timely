@@ -16,6 +16,7 @@ pub fn build_router() -> Router {
         .route("/api/productivity", get(handlers::get_productivity))
         .route("/api/trends", get(handlers::get_trends))
         .route("/api/apps/{name}/details", get(handlers::get_app_details))
+        .route("/api/urls", get(handlers::get_urls))
         .route("/api/rules", get(handlers::get_rules))
         .route("/api/rules", post(handlers::post_rule))
         .route("/api/rules/{id}", put(handlers::put_rule))

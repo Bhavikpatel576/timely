@@ -49,6 +49,19 @@ pub struct TrendsParams {
 }
 
 #[derive(Deserialize)]
+pub struct UrlsParams {
+    pub from: Option<String>,
+    pub to: Option<String>,
+    pub search: Option<String>,
+    pub domain: Option<String>,
+    pub category: Option<String>,
+    pub page: Option<i64>,
+    pub limit: Option<i64>,
+    pub sort: Option<String>,
+    pub order: Option<String>,
+}
+
+#[derive(Deserialize)]
 pub struct RuleBody {
     pub app: Option<String>,
     pub category_id: Option<i64>,
@@ -539,6 +552,133 @@ pub async fn delete_rule(
         .map_err(|e| internal_error(e.to_string()))?;
 
         Ok(Json(serde_json::json!({ "success": true, "recategorized": recategorized })))
+    })
+    .await
+    .map_err(|e| internal_error(e.to_string()))?
+}
+
+pub async fn get_urls(
+    Query(params): Query<UrlsParams>,
+) -> Result<Json<serde_json::Value>, (StatusCode, Json<serde_json::Value>)> {
+    let (from_date, to_date) = date_range(params.from, params.to);
+    let search = params.search.unwrap_or_default();
+    let domain = params.domain.unwrap_or_default();
+    let category = params.category.unwrap_or_default();
+    let page = params.page.unwrap_or(1).max(1);
+    let limit = params.limit.unwrap_or(50).clamp(1, 100);
+    let sort_key = params.sort.unwrap_or_else(|| "timestamp".into());
+    let order_dir = if params.order.as_deref() == Some("asc") { "ASC" } else { "DESC" };
+
+    let sort_col = match sort_key.as_str() {
+        "duration" => "e.duration",
+        "app" => "e.app",
+        "url_domain" => "e.url_domain",
+        "category" => "category",
+        _ => "e.timestamp",
+    };
+
+    tokio::task::spawn_blocking(move || {
+        let conn = db::open_default_db().map_err(|e| internal_error(e.to_string()))?;
+
+        let mut conditions = vec![
+            "e.timestamp >= ?1".to_string(),
+            "e.timestamp <= ?2".to_string(),
+            "e.url IS NOT NULL".to_string(),
+            "e.url != ''".to_string(),
+        ];
+        let mut bind_values: Vec<String> = vec![from_date.clone(), to_date.clone()];
+
+        if !search.is_empty() {
+            let idx = bind_values.len();
+            conditions.push(format!(
+                "(e.url LIKE ?{} OR e.url_domain LIKE ?{} OR e.title LIKE ?{})",
+                idx + 1, idx + 2, idx + 3
+            ));
+            let like = format!("%{}%", search);
+            bind_values.push(like.clone());
+            bind_values.push(like.clone());
+            bind_values.push(like);
+        }
+        if !domain.is_empty() {
+            let idx = bind_values.len() + 1;
+            conditions.push(format!("e.url_domain = ?{}", idx));
+            bind_values.push(domain);
+        }
+        if !category.is_empty() {
+            let idx = bind_values.len() + 1;
+            conditions.push(format!("e.category_id = ?{}", idx));
+            bind_values.push(category);
+        }
+
+        let where_clause = conditions.join(" AND ");
+
+        // Count total
+        let count_sql = format!("SELECT COUNT(*) FROM events e WHERE {}", where_clause);
+        let mut count_stmt = conn.prepare(&count_sql).map_err(|e| internal_error(e.to_string()))?;
+        let params_refs: Vec<&dyn rusqlite::types::ToSql> = bind_values.iter().map(|v| v as &dyn rusqlite::types::ToSql).collect();
+        let total: i64 = count_stmt.query_row(params_refs.as_slice(), |row| row.get(0))
+            .map_err(|e| internal_error(e.to_string()))?;
+
+        // Fetch rows
+        let offset = (page - 1) * limit;
+        let offset_str = offset.to_string();
+        let limit_str = limit.to_string();
+        let mut row_bind = bind_values.clone();
+        let limit_idx = row_bind.len() + 1;
+        let offset_idx = row_bind.len() + 2;
+        row_bind.push(limit_str);
+        row_bind.push(offset_str);
+
+        let row_sql = format!(
+            "SELECT e.url, e.url_domain, e.title, e.timestamp, e.duration,
+                    COALESCE(c.name, 'uncategorized') as category, e.app, e.is_afk
+             FROM events e
+             LEFT JOIN categories c ON e.category_id = c.id
+             WHERE {}
+             ORDER BY {} {}
+             LIMIT ?{} OFFSET ?{}",
+            where_clause, sort_col, order_dir, limit_idx, offset_idx
+        );
+
+        let mut stmt = conn.prepare(&row_sql).map_err(|e| internal_error(e.to_string()))?;
+        let row_params: Vec<&dyn rusqlite::types::ToSql> = row_bind.iter().map(|v| v as &dyn rusqlite::types::ToSql).collect();
+        let mut query_rows = stmt.query(row_params.as_slice()).map_err(|e| internal_error(e.to_string()))?;
+
+        let mut rows = Vec::new();
+        while let Some(row) = query_rows.next().map_err(|e| internal_error(e.to_string()))? {
+            rows.push(serde_json::json!({
+                "url": row.get::<_, String>(0).map_err(|e| internal_error(e.to_string()))?,
+                "url_domain": row.get::<_, Option<String>>(1).map_err(|e| internal_error(e.to_string()))?,
+                "title": row.get::<_, Option<String>>(2).map_err(|e| internal_error(e.to_string()))?,
+                "timestamp": row.get::<_, String>(3).map_err(|e| internal_error(e.to_string()))?,
+                "duration": row.get::<_, f64>(4).map_err(|e| internal_error(e.to_string()))?,
+                "category": row.get::<_, String>(5).map_err(|e| internal_error(e.to_string()))?,
+                "app": row.get::<_, Option<String>>(6).map_err(|e| internal_error(e.to_string()))?,
+                "is_afk": row.get::<_, i32>(7).map_err(|e| internal_error(e.to_string()))? != 0,
+            }));
+        }
+
+        // Distinct domains
+        let domains_sql = "SELECT DISTINCT url_domain FROM events
+            WHERE timestamp >= ?1 AND timestamp <= ?2
+              AND url IS NOT NULL AND url != '' AND url_domain IS NOT NULL AND url_domain != ''
+            ORDER BY url_domain ASC";
+        let mut domains_stmt = conn.prepare(domains_sql).map_err(|e| internal_error(e.to_string()))?;
+        let mut domain_rows = domains_stmt.query(rusqlite::params![from_date, to_date])
+            .map_err(|e| internal_error(e.to_string()))?;
+        let mut domains = Vec::new();
+        while let Some(row) = domain_rows.next().map_err(|e| internal_error(e.to_string()))? {
+            let d: String = row.get(0).map_err(|e| internal_error(e.to_string()))?;
+            domains.push(d);
+        }
+
+        Ok(Json(serde_json::json!({
+            "rows": rows,
+            "total": total,
+            "page": page,
+            "limit": limit,
+            "domains": domains,
+        })))
     })
     .await
     .map_err(|e| internal_error(e.to_string()))?
