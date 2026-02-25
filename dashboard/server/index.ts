@@ -10,6 +10,7 @@ import productivityRouter from "./routes/productivity.js";
 import trendsRouter from "./routes/trends.js";
 import currentRouter from "./routes/current.js";
 import rulesRouter from "./routes/rules.js";
+import urlsRouter from "./routes/urls.js";
 
 const app = express();
 const PORT = 3123;
@@ -25,6 +26,7 @@ app.use("/api/productivity", productivityRouter);
 app.use("/api/trends", trendsRouter);
 app.use("/api/current", currentRouter);
 app.use("/api/rules", rulesRouter);
+app.use("/api/urls", urlsRouter);
 
 // In production, serve the built frontend
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
