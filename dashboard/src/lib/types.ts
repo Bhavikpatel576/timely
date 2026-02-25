@@ -100,3 +100,22 @@ export interface CategoryRule {
   is_builtin: boolean;
   priority: number;
 }
+
+export interface UrlRow {
+  url: string;
+  url_domain: string | null;
+  title: string | null;
+  timestamp: string;
+  duration: number;
+  category: string;
+  app: string | null;
+  is_afk: boolean;
+}
+
+export interface UrlsResponse {
+  rows: UrlRow[];
+  total: number;
+  page: number;
+  limit: number;
+  domains: string[];
+}

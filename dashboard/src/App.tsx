@@ -15,6 +15,7 @@ import { TrendLineChart } from "@/components/trend-line-chart";
 import { RulesPanel } from "@/components/rules-panel";
 import { FlaggedContentBanner } from "@/components/flagged-content-banner";
 import { FlaggedActivitySection } from "@/components/flagged-activity-section";
+import { BrowseUrls } from "@/components/browse-urls";
 import { todayString, toDateString, formatDuration, formatRelativeTime } from "@/lib/format";
 import { isInappropriate } from "@/lib/inappropriate";
 import type { DateRange, SummaryResponse, ProductivityData, CurrentActivity } from "@/lib/types";
@@ -233,6 +234,7 @@ export default function App() {
 
   const [bannerDismissed, setBannerDismissed] = useState(false);
   const [rulesOpen, setRulesOpen] = useState(false);
+  const [activeTab, setActiveTab] = useState<"dashboard" | "urls">("dashboard");
 
   // Reset banner dismissal when date range changes
   useEffect(() => {
@@ -273,11 +275,39 @@ export default function App() {
             </div>
           </div>
 
-          <DashboardContent
-            bannerDismissed={bannerDismissed}
-            onDismissBanner={() => setBannerDismissed(true)}
-            onOpenRules={() => setRulesOpen(true)}
-          />
+          {/* Tab bar */}
+          <div className="flex gap-1 mb-6 border-b border-border">
+            <button
+              className={`px-4 py-2 text-sm font-medium border-b-2 transition-colors ${
+                activeTab === "dashboard"
+                  ? "border-foreground text-foreground"
+                  : "border-transparent text-muted-foreground hover:text-foreground"
+              }`}
+              onClick={() => setActiveTab("dashboard")}
+            >
+              Dashboard
+            </button>
+            <button
+              className={`px-4 py-2 text-sm font-medium border-b-2 transition-colors ${
+                activeTab === "urls"
+                  ? "border-foreground text-foreground"
+                  : "border-transparent text-muted-foreground hover:text-foreground"
+              }`}
+              onClick={() => setActiveTab("urls")}
+            >
+              Browse URLs
+            </button>
+          </div>
+
+          {activeTab === "dashboard" ? (
+            <DashboardContent
+              bannerDismissed={bannerDismissed}
+              onDismissBanner={() => setBannerDismissed(true)}
+              onOpenRules={() => setRulesOpen(true)}
+            />
+          ) : (
+            <BrowseUrls />
+          )}
         </div>
       </div>
     </DateRangeContext>
